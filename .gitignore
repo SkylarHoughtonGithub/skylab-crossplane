@@ -1,0 +1,17 @@
+# macOS
+.DS_Store
+
+# Editors
+.idea/
+.vscode/
+
+# Crossplane build output
+*.xpkg
+_output/
+.work/
+
+# Rendered test output
+*.rendered.yaml
+
+# Logs
+*.log
