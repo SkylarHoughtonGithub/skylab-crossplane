@@ -14,7 +14,8 @@ for example in examples/*/*.yaml; do
   actual="${tmp}/${api}-${cloud}.actual.yaml"
 
   echo ">> rendering ${api}/${cloud}"
-  crossplane beta render "$example" "$composition" tests/functions.yaml > "$actual"
+  crossplane composition render --include-full-xr \
+    "$example" "$composition" tests/functions.yaml > "$actual"
 
   if [[ ! -f "$expected" ]]; then
     echo "   no expected file at ${expected}; actual output:"
