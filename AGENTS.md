@@ -1,4 +1,4 @@
-# CLAUDE.md
+# AGENTS.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
@@ -16,7 +16,8 @@ Fresh repo — nothing is built yet.
 
 - `main` is protected: branch and open a PR (self-merge, 0 approvals).
 - No `Co-Authored-By` trailers in commit messages.
-- CI: `crossplane beta render` on every example (compared against expected output), `crossplane beta validate` against XRDs, `crossplane xpkg build` + push to GHCR on tagged releases.
+- **Conventional Commit PR titles.** PRs are squash-merged, so the title becomes the main-branch commit. `feat:` bumps minor, `fix:` patches, `feat!:`/`BREAKING CHANGE:` majors; `chore:`/`docs:`/`ci:`/`refactor:` don't release. `release-please` watches main and opens a release PR when there's something to ship; merging that PR cuts the tag and the existing `release.yaml` workflow pushes the xpkg to GHCR.
+- CI: `crossplane xpkg build` (structural check) and `crossplane composition render` on every example (diffed against expected output after canonicalizing timestamps + document order). `release.yaml` on tag builds + pushes the Configuration xpkg to GHCR.
 
 ## Target repo shape
 
@@ -42,7 +43,7 @@ tests/
 
 **Cluster handoff to Argo CD.** Every cluster composition also creates an Argo CD cluster Secret on the hub via provider-kubernetes, carrying env labels and `awsAuthConfig` (EKS) or the `argocd-k8s-auth gcp` exec provider (GKE). Deleting the XR removes the Secret.
 
-**Composition selection via function**, not labels — so logic is testable with `crossplane beta render`.
+**Composition selection via function**, not labels — so logic is testable with `crossplane composition render`.
 
 ## Cross-repo map
 
