@@ -21,7 +21,7 @@ jobs:
             -o /tmp/install.sh
           sh /tmp/install.sh
           sudo install -m 0755 crossplane /usr/local/bin/crossplane
-          crossplane version
+          crossplane --help >/dev/null
 
       - name: Validate XRDs + compositions
         run: ./scripts/validate.sh
