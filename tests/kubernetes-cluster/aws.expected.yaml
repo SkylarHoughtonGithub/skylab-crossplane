@@ -1,0 +1,110 @@
+---
+apiVersion: compute.skylab.io/v1alpha1
+kind: XKubernetesCluster
+metadata:
+  name: example
+  namespace: default
+spec:
+  aws:
+    clusterRoleArn: arn:aws:iam::123456789012:role/eks-cluster
+    nodeRoleArn: arn:aws:iam::123456789012:role/eks-node
+    subnetIds:
+    - subnet-aaaaaaaa
+    - subnet-bbbbbbbb
+  cloud: aws
+  crossplane:
+    resourceRefs:
+    - apiVersion: eks.aws.upbound.io/v1beta1
+      kind: Cluster
+      name: example-d352888d304b
+    - apiVersion: kubernetes.crossplane.io/v1alpha2
+      kind: Object
+      name: example-35e1fdcd4650
+  env: dev
+  nodeCount: 2
+  region: us-east-1
+  version: "1.30"
+status:
+  conditions:
+  - lastTransitionTime: "REDACTED"
+    reason: WatchCircuitClosed
+    status: "True"
+    type: Responsive
+  - lastTransitionTime: "REDACTED"
+    reason: ReconcileSuccess
+    status: "True"
+    type: Synced
+  - lastTransitionTime: "REDACTED"
+    message: 'Unready resources: argocd-cluster-secret, cluster'
+    reason: Creating
+    status: "False"
+    type: Ready
+---
+apiVersion: kubernetes.crossplane.io/v1alpha2
+kind: Object
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: argocd-cluster-secret
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-35e1fdcd4650
+  namespace: default
+  ownerReferences:
+  - apiVersion: compute.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XKubernetesCluster
+    name: example
+    uid: 1bff395b-857e-5fa9-8a3a-1842b2784b6d
+spec:
+  forProvider:
+    manifest:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        labels:
+          argocd.argoproj.io/secret-type: cluster
+          skylab.io/env: dev
+        name: cluster-example
+        namespace: argocd
+      stringData:
+        config: |
+          {
+            "awsAuthConfig": {"clusterName": "example"},
+            "tlsClientConfig": {"insecure": false, "caData": ""}
+          }
+        name: example
+        server: null
+      type: Opaque
+  providerConfigRef:
+    name: hub
+---
+apiVersion: eks.aws.upbound.io/v1beta1
+kind: Cluster
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: cluster
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-d352888d304b
+  namespace: default
+  ownerReferences:
+  - apiVersion: compute.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XKubernetesCluster
+    name: example
+    uid: 1bff395b-857e-5fa9-8a3a-1842b2784b6d
+spec:
+  forProvider:
+    region: us-east-1
+    roleArn: arn:aws:iam::123456789012:role/eks-cluster
+    version: "1.30"
+    vpcConfig:
+    - subnetIds:
+      - subnet-aaaaaaaa
+      - subnet-bbbbbbbb
+  providerConfigRef:
+    name: default
