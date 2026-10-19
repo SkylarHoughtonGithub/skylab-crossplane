@@ -1,0 +1,43 @@
+name: release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install crossplane CLI
+        run: |
+          curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh" | CHANNEL=stable sh
+          sudo mv crossplane /usr/local/bin/
+          crossplane version
+
+      - name: Build package
+        run: |
+          crossplane xpkg build \
+            --package-root=. \
+            --ignore=".github/**,scripts/**,tests/**,examples/**,plan.md,README.md,AGENTS.md,LICENSE,.gitignore" \
+            --package-file=skylab-platform.xpkg
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push package to GHCR
+        run: |
+          TAG="${GITHUB_REF#refs/tags/}"
+          REPO_LC="${GITHUB_REPOSITORY_OWNER,,}"
+          crossplane xpkg push \
+            --package-files=skylab-platform.xpkg \
+            "ghcr.io/${REPO_LC}/skylab-platform:${TAG}"
