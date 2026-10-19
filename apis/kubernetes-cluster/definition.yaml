@@ -1,0 +1,63 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: xkubernetesclusters.compute.skylab.io
+spec:
+  scope: Namespaced
+  group: compute.skylab.io
+  names:
+    kind: XKubernetesCluster
+    plural: xkubernetesclusters
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [cloud, region, version]
+              properties:
+                cloud:
+                  type: string
+                  enum: [aws, gcp]
+                region:
+                  type: string
+                version:
+                  type: string
+                nodeCount:
+                  type: integer
+                  default: 2
+                nodeInstanceType:
+                  type: string
+                env:
+                  type: string
+                  default: dev
+                aws:
+                  type: object
+                  properties:
+                    clusterRoleArn:
+                      type: string
+                    nodeRoleArn:
+                      type: string
+                    subnetIds:
+                      type: array
+                      items:
+                        type: string
+                gcp:
+                  type: object
+                  properties:
+                    network:
+                      type: string
+                    subnetwork:
+                      type: string
+                    serviceAccount:
+                      type: string
+            status:
+              type: object
+              properties:
+                endpoint:
+                  type: string

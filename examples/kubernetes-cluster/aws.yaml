@@ -1,0 +1,17 @@
+apiVersion: compute.skylab.io/v1alpha1
+kind: XKubernetesCluster
+metadata:
+  name: example
+  namespace: default
+spec:
+  cloud: aws
+  region: us-east-1
+  version: "1.30"
+  nodeCount: 2
+  env: dev
+  aws:
+    clusterRoleArn: arn:aws:iam::123456789012:role/eks-cluster
+    nodeRoleArn: arn:aws:iam::123456789012:role/eks-node
+    subnetIds:
+      - subnet-aaaaaaaa
+      - subnet-bbbbbbbb
