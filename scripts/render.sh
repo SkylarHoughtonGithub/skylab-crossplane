@@ -5,7 +5,20 @@ tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
 normalize() {
-  sed -E 's/lastTransitionTime: "[^"]*"/lastTransitionTime: "REDACTED"/g'
+  python3 -c '
+import sys, re, yaml
+content = sys.stdin.read()
+content = re.sub(r"lastTransitionTime:\s*\"[^\"]*\"", "lastTransitionTime: \"REDACTED\"", content)
+docs = [d for d in yaml.safe_load_all(content) if d]
+docs.sort(key=lambda d: (
+    d.get("apiVersion", ""),
+    d.get("kind", ""),
+    (d.get("metadata") or {}).get("name", ""),
+))
+for d in docs:
+    print("---")
+    print(yaml.dump(d, sort_keys=True, default_flow_style=False), end="")
+'
 }
 
 fail=0

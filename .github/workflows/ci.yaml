@@ -23,6 +23,9 @@ jobs:
           sudo install -m 0755 crossplane /usr/local/bin/crossplane
           crossplane --help >/dev/null
 
+      - name: Install Python YAML support
+        run: python3 -c "import yaml" 2>/dev/null || sudo apt-get install -y --no-install-recommends python3-yaml
+
       - name: Build package (structural check)
         run: ./scripts/validate.sh
 
