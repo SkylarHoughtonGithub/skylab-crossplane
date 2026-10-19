@@ -196,5 +196,7 @@ metadata:
 spec:
   forProvider:
     region: us-east-1
+    vpcIdSelector:
+      matchControllerRef: true
   providerConfigRef:
     name: default
