@@ -1,0 +1,8 @@
+apiVersion: network.skylab.io/v1alpha1
+kind: XNetwork
+metadata:
+  name: example
+  namespace: default
+spec:
+  cloud: aws
+  region: us-east-1

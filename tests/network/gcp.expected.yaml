@@ -1,0 +1,81 @@
+---
+apiVersion: network.skylab.io/v1alpha1
+kind: XNetwork
+metadata:
+  name: example
+  namespace: default
+spec:
+  cloud: gcp
+  crossplane:
+    resourceRefs:
+    - apiVersion: compute.gcp.upbound.io/v1beta1
+      kind: Network
+      name: example-3638f7d678c7
+    - apiVersion: compute.gcp.upbound.io/v1beta1
+      kind: Subnetwork
+      name: example-0e20683adb9f
+  region: us-central1
+status:
+  conditions:
+  - lastTransitionTime: "REDACTED"
+    reason: WatchCircuitClosed
+    status: "True"
+    type: Responsive
+  - lastTransitionTime: "REDACTED"
+    reason: ReconcileSuccess
+    status: "True"
+    type: Synced
+  - lastTransitionTime: "REDACTED"
+    message: 'Unready resources: network, subnet'
+    reason: Creating
+    status: "False"
+    type: Ready
+---
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: Network
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: network
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-3638f7d678c7
+  namespace: default
+  ownerReferences:
+  - apiVersion: network.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XNetwork
+    name: example
+    uid: 7b4737ea-a179-50fe-89cc-b2f820c94fe1
+spec:
+  forProvider:
+    autoCreateSubnetworks: false
+  providerConfigRef:
+    name: default
+---
+apiVersion: compute.gcp.upbound.io/v1beta1
+kind: Subnetwork
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: subnet
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-0e20683adb9f
+  namespace: default
+  ownerReferences:
+  - apiVersion: network.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XNetwork
+    name: example
+    uid: 7b4737ea-a179-50fe-89cc-b2f820c94fe1
+spec:
+  forProvider:
+    ipCidrRange: 10.0.1.0/24
+    networkSelector:
+      matchControllerRef: true
+    region: us-central1
+  providerConfigRef:
+    name: default

@@ -1,0 +1,202 @@
+---
+apiVersion: network.skylab.io/v1alpha1
+kind: XNetwork
+metadata:
+  name: example
+  namespace: default
+spec:
+  cloud: aws
+  crossplane:
+    resourceRefs:
+    - apiVersion: ec2.aws.upbound.io/v1beta1
+      kind: InternetGateway
+      name: example-94685d3b787d
+    - apiVersion: ec2.aws.upbound.io/v1beta1
+      kind: RouteTableAssociation
+      name: example-990b4fa1e1fd
+    - apiVersion: ec2.aws.upbound.io/v1beta1
+      kind: RouteTable
+      name: example-771924d6432f
+    - apiVersion: ec2.aws.upbound.io/v1beta1
+      kind: Route
+      name: example-2454dc59c50a
+    - apiVersion: ec2.aws.upbound.io/v1beta1
+      kind: Subnet
+      name: example-658bc8cb7351
+    - apiVersion: ec2.aws.upbound.io/v1beta1
+      kind: VPC
+      name: example-14f259337781
+  region: us-east-1
+status:
+  conditions:
+  - lastTransitionTime: "REDACTED"
+    reason: WatchCircuitClosed
+    status: "True"
+    type: Responsive
+  - lastTransitionTime: "REDACTED"
+    reason: ReconcileSuccess
+    status: "True"
+    type: Synced
+  - lastTransitionTime: "REDACTED"
+    message: 'Unready resources: igw, route-public-default, rt-public, and 3 more'
+    reason: Creating
+    status: "False"
+    type: Ready
+---
+apiVersion: ec2.aws.upbound.io/v1beta1
+kind: Subnet
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: subnet-public
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-658bc8cb7351
+  namespace: default
+  ownerReferences:
+  - apiVersion: network.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XNetwork
+    name: example
+    uid: 7b4737ea-a179-50fe-89cc-b2f820c94fe1
+spec:
+  forProvider:
+    cidrBlock: 10.0.1.0/24
+    mapPublicIpOnLaunch: true
+    region: us-east-1
+    vpcIdSelector:
+      matchControllerRef: true
+  providerConfigRef:
+    name: default
+---
+apiVersion: ec2.aws.upbound.io/v1beta1
+kind: RouteTable
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: rt-public
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-771924d6432f
+  namespace: default
+  ownerReferences:
+  - apiVersion: network.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XNetwork
+    name: example
+    uid: 7b4737ea-a179-50fe-89cc-b2f820c94fe1
+spec:
+  forProvider:
+    region: us-east-1
+    vpcIdSelector:
+      matchControllerRef: true
+  providerConfigRef:
+    name: default
+---
+apiVersion: ec2.aws.upbound.io/v1beta1
+kind: Route
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: route-public-default
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-2454dc59c50a
+  namespace: default
+  ownerReferences:
+  - apiVersion: network.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XNetwork
+    name: example
+    uid: 7b4737ea-a179-50fe-89cc-b2f820c94fe1
+spec:
+  forProvider:
+    destinationCidrBlock: 0.0.0.0/0
+    gatewayIdSelector:
+      matchControllerRef: true
+    region: us-east-1
+    routeTableIdSelector:
+      matchControllerRef: true
+  providerConfigRef:
+    name: default
+---
+apiVersion: ec2.aws.upbound.io/v1beta1
+kind: RouteTableAssociation
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: rta-public
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-990b4fa1e1fd
+  namespace: default
+  ownerReferences:
+  - apiVersion: network.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XNetwork
+    name: example
+    uid: 7b4737ea-a179-50fe-89cc-b2f820c94fe1
+spec:
+  forProvider:
+    region: us-east-1
+    routeTableIdSelector:
+      matchControllerRef: true
+    subnetIdSelector:
+      matchControllerRef: true
+  providerConfigRef:
+    name: default
+---
+apiVersion: ec2.aws.upbound.io/v1beta1
+kind: VPC
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: vpc
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-14f259337781
+  namespace: default
+  ownerReferences:
+  - apiVersion: network.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XNetwork
+    name: example
+    uid: 7b4737ea-a179-50fe-89cc-b2f820c94fe1
+spec:
+  forProvider:
+    cidrBlock: 10.0.0.0/16
+    enableDnsHostnames: true
+    enableDnsSupport: true
+    region: us-east-1
+  providerConfigRef:
+    name: default
+---
+apiVersion: ec2.aws.upbound.io/v1beta1
+kind: InternetGateway
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: igw
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-94685d3b787d
+  namespace: default
+  ownerReferences:
+  - apiVersion: network.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XNetwork
+    name: example
+    uid: 7b4737ea-a179-50fe-89cc-b2f820c94fe1
+spec:
+  forProvider:
+    region: us-east-1
+    vpcIdSelector:
+      matchControllerRef: true
+  providerConfigRef:
+    name: default
