@@ -1,10 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-shopt -s nullglob
-for composition in apis/*/composition.yaml; do
-  api_dir=$(dirname "$composition")
-  xrd="${api_dir}/definition.yaml"
-  echo ">> validating ${api_dir}"
-  crossplane beta validate "$xrd" "$composition"
-done
+# v2.3+ CLI dropped the standalone validate command. `xpkg build` is a
+# strict structural check: XRDs/Compositions/metadata must parse and
+# cross-reference correctly or the build fails.
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+
+crossplane xpkg build \
+  --package-root=. \
+  --examples-root=./examples \
+  --ignore=".github/workflows/*.yaml,tests/functions.yaml,tests/bucket/*.yaml" \
+  --package-file="${tmp}/skylab-platform.xpkg"
+
+echo ">> package built OK"

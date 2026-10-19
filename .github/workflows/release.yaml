@@ -16,16 +16,23 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install crossplane CLI
+        env:
+          XP_VERSION: v2.3.1
         run: |
-          curl -sL "https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh" | CHANNEL=stable sh
-          sudo mv crossplane /usr/local/bin/
-          crossplane version
+          set -euxo pipefail
+          curl --fail --show-error --silent --location \
+            "https://raw.githubusercontent.com/crossplane/crossplane/main/install.sh" \
+            -o /tmp/install.sh
+          sh /tmp/install.sh
+          sudo install -m 0755 crossplane /usr/local/bin/crossplane
+          crossplane --help >/dev/null
 
       - name: Build package
         run: |
           crossplane xpkg build \
             --package-root=. \
-            --ignore=".github/**,scripts/**,tests/**,examples/**,plan.md,README.md,AGENTS.md,LICENSE,.gitignore" \
+            --examples-root=./examples \
+            --ignore=".github/workflows/*.yaml,tests/functions.yaml,tests/bucket/*.yaml" \
             --package-file=skylab-platform.xpkg
 
       - uses: docker/login-action@v3

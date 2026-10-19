@@ -4,9 +4,25 @@ kind: XBucket
 metadata:
   name: example
   namespace: default
+spec:
+  cloud: aws
+  crossplane:
+    resourceRefs:
+    - apiVersion: s3.aws.upbound.io/v1beta1
+      kind: Bucket
+      name: example-aac88f3539d6
+  region: us-east-1
 status:
   conditions:
-  - lastTransitionTime: "2024-01-01T00:00:00Z"
+  - lastTransitionTime: "REDACTED"
+    reason: WatchCircuitClosed
+    status: "True"
+    type: Responsive
+  - lastTransitionTime: "REDACTED"
+    reason: ReconcileSuccess
+    status: "True"
+    type: Synced
+  - lastTransitionTime: "REDACTED"
     message: 'Unready resources: bucket'
     reason: Creating
     status: "False"
@@ -21,13 +37,15 @@ metadata:
   generateName: example-
   labels:
     crossplane.io/composite: example
+  name: example-aac88f3539d6
+  namespace: default
   ownerReferences:
   - apiVersion: storage.skylab.io/v1alpha1
     blockOwnerDeletion: true
     controller: true
     kind: XBucket
     name: example
-    uid: ""
+    uid: 9493c133-1fb1-5ddc-99a7-b432fa9a818a
 spec:
   forProvider:
     region: us-east-1
