@@ -1,0 +1,39 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: xnetworks.network.skylab.io
+spec:
+  scope: Namespaced
+  group: network.skylab.io
+  names:
+    kind: XNetwork
+    plural: xnetworks
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [cloud, region]
+              properties:
+                cloud:
+                  type: string
+                  enum: [aws, gcp]
+                region:
+                  type: string
+                cidrBlock:
+                  type: string
+                  default: "10.0.0.0/16"
+                subnetCidr:
+                  type: string
+                  default: "10.0.1.0/24"
+            status:
+              type: object
+              properties:
+                networkId:
+                  type: string
