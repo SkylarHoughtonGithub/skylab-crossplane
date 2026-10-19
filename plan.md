@@ -43,14 +43,14 @@ Humans and agents only ever write to Git; Argo CD is the single path into the cl
 7. **AI layer**: model gateway, HolmesGPT, tack-ai remediation, kagent.
 8. **Portfolio finish**: profile README, pins, ADRs.
 
-## Status (as of 2026-10-13)
+## Status (as of 2026-10-19)
 
 Progress through the shared build order:
 
-- [x] 1. **skylab-gitops** — bootstrap, skylab-apps renderer, CI pipeline, waves -2 → 1 landed. Next: close the deferred wave-0 wiring (now unblocked by terraform), then wave 2 pin or wave 3 KubeVela.
-- [x] 2. **skylab-terraform** — substantively complete. Seven stacks (bootstrap, identity, storage, roles-anywhere, crossplane, qdevice, gcp-identity) and five modules (aws-github-oidc, aws-object-storage, aws-roles-anywhere, aws-ecs-service, gcp-workload-identity) with fmt/validate/tflint/trivy CI. Modules consistently cloud-prefixed. Follow-ups below.
-- [ ] 3. **skylab-backstage** — not started.
-- [ ] 4. **skylab-crossplane** — not started. The gitops wave 2 Application will pin an OCI package built from this repo.
+- [x] 1. **skylab-gitops** — bootstrap, skylab-apps renderer, CI pipeline, waves -2 → 6 landed (wave 2 deferred pending this repo's OCI package). 16 Applications healthy in dev; Backstage running in degraded-mode guest sign-in.
+- [x] 2. **skylab-terraform** — substantively complete. Seven stacks and five modules with fmt/validate/tflint/trivy CI. Follow-ups below.
+- [x] 3. **skylab-backstage** — image + chart + plugins shipped; wrapper chart deployed by gitops wave 6.
+- [ ] 4. **skylab-crossplane** — scaffolding + first API in progress. `crossplane.yaml` Configuration metadata with pinned provider/function dependencies, Bucket XRD (v2, Namespaced) with a single composition using `function-go-templating` to render S3 or GCS based on `spec.cloud`, example XRs for both clouds, and a CI pipeline running `crossplane beta validate` + `beta render` with expected-output diff. OCI publish on tagged release is the next PR; the gitops wave 2 pin lands after that.
 - [ ] 5. Archive the old repos
 - [ ] 6. Golden paths
 - [ ] 7. AI layer (includes tack-ai)

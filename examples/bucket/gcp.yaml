@@ -1,0 +1,8 @@
+apiVersion: storage.skylab.io/v1alpha1
+kind: XBucket
+metadata:
+  name: example
+  namespace: default
+spec:
+  cloud: gcp
+  region: us-central1

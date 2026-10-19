@@ -1,0 +1,75 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xbuckets.storage.skylab.io
+spec:
+  compositeTypeRef:
+    apiVersion: storage.skylab.io/v1alpha1
+    kind: XBucket
+  mode: Pipeline
+  pipeline:
+    - step: render-cloud-resources
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $xr := .observed.composite.resource -}}
+            {{- $name := $xr.metadata.name -}}
+            {{- $namespace := default "default" $xr.metadata.namespace -}}
+            {{- $cloud := $xr.spec.cloud -}}
+            {{- $region := $xr.spec.region -}}
+            {{- $versioning := default false $xr.spec.versioning -}}
+            {{- $bucketName := printf "%s-%s" $namespace $name -}}
+            {{- if eq $cloud "aws" }}
+            ---
+            apiVersion: s3.aws.upbound.io/v1beta1
+            kind: Bucket
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: bucket
+                crossplane.io/external-name: {{ $bucketName }}
+            spec:
+              forProvider:
+                region: {{ $region }}
+              providerConfigRef:
+                name: default
+            {{- if $versioning }}
+            ---
+            apiVersion: s3.aws.upbound.io/v1beta1
+            kind: BucketVersioning
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: bucket-versioning
+            spec:
+              forProvider:
+                region: {{ $region }}
+                bucketSelector:
+                  matchControllerRef: true
+                versioningConfiguration:
+                  - status: Enabled
+              providerConfigRef:
+                name: default
+            {{- end }}
+            {{- else if eq $cloud "gcp" }}
+            ---
+            apiVersion: storage.gcp.upbound.io/v1beta1
+            kind: Bucket
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: bucket
+                crossplane.io/external-name: {{ $bucketName }}
+            spec:
+              forProvider:
+                location: {{ $region | upper }}
+                versioning:
+                  - enabled: {{ $versioning }}
+              providerConfigRef:
+                name: default
+            {{- end }}
+    - step: auto-ready
+      functionRef:
+        name: function-auto-ready

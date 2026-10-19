@@ -1,0 +1,37 @@
+---
+apiVersion: storage.skylab.io/v1alpha1
+kind: XBucket
+metadata:
+  name: example
+  namespace: default
+status:
+  conditions:
+  - lastTransitionTime: "2024-01-01T00:00:00Z"
+    message: 'Unready resources: bucket'
+    reason: Creating
+    status: "False"
+    type: Ready
+---
+apiVersion: storage.gcp.upbound.io/v1beta1
+kind: Bucket
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: bucket
+    crossplane.io/external-name: default-example
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  ownerReferences:
+  - apiVersion: storage.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XBucket
+    name: example
+    uid: ""
+spec:
+  forProvider:
+    location: US-CENTRAL1
+    versioning:
+    - enabled: false
+  providerConfigRef:
+    name: default
