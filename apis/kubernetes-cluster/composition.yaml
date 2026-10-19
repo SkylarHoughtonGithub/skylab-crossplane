@@ -1,0 +1,185 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xkubernetesclusters.compute.skylab.io
+spec:
+  compositeTypeRef:
+    apiVersion: compute.skylab.io/v1alpha1
+    kind: XKubernetesCluster
+  mode: Pipeline
+  pipeline:
+    - step: render-cloud-resources
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $xr := .observed.composite.resource -}}
+            {{- $name := $xr.metadata.name -}}
+            {{- $cloud := $xr.spec.cloud -}}
+            {{- $region := $xr.spec.region -}}
+            {{- $version := $xr.spec.version -}}
+            {{- $nodeCount := default 2 $xr.spec.nodeCount -}}
+            {{- $env := default "dev" $xr.spec.env -}}
+            {{- $instanceType := $xr.spec.nodeInstanceType -}}
+            {{- $awsSpec := default dict $xr.spec.aws -}}
+            {{- $gcpSpec := default dict $xr.spec.gcp -}}
+            {{- $resources := default dict .observed.resources -}}
+            {{- if eq $cloud "aws" }}
+            {{- $defaultInstance := default "t3.medium" $instanceType -}}
+            ---
+            apiVersion: eks.aws.upbound.io/v1beta1
+            kind: Cluster
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: cluster
+            spec:
+              forProvider:
+                region: {{ $region }}
+                version: "{{ $version }}"
+                roleArn: {{ $awsSpec.clusterRoleArn }}
+                vpcConfig:
+                  - subnetIds:
+                      {{- range $awsSpec.subnetIds }}
+                      - {{ . }}
+                      {{- end }}
+              providerConfigRef:
+                name: default
+            ---
+            apiVersion: eks.aws.upbound.io/v1beta1
+            kind: NodeGroup
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: node-group
+            spec:
+              forProvider:
+                region: {{ $region }}
+                clusterNameSelector:
+                  matchControllerRef: true
+                nodeRoleArn: {{ $awsSpec.nodeRoleArn }}
+                subnetIds:
+                  {{- range $awsSpec.subnetIds }}
+                  - {{ . }}
+                  {{- end }}
+                scalingConfig:
+                  - desiredSize: {{ $nodeCount }}
+                    maxSize: {{ $nodeCount }}
+                    minSize: {{ $nodeCount }}
+                instanceTypes:
+                  - {{ $defaultInstance }}
+              providerConfigRef:
+                name: default
+            {{- $endpoint := dig "cluster" "resource" "status" "atProvider" "endpoint" "" $resources -}}
+            {{- $caData := dig "cluster" "resource" "status" "atProvider" "certificateAuthority" (list) $resources -}}
+            {{- $ca := "" -}}
+            {{- if gt (len $caData) 0 -}}
+              {{- $ca = dig 0 "data" "" $caData -}}
+            {{- end -}}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: argocd-cluster-secret
+            spec:
+              providerConfigRef:
+                name: hub
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: Secret
+                  metadata:
+                    name: cluster-{{ $name }}
+                    namespace: argocd
+                    labels:
+                      argocd.argoproj.io/secret-type: cluster
+                      skylab.io/env: {{ $env }}
+                  type: Opaque
+                  stringData:
+                    name: {{ $name }}
+                    server: {{ $endpoint }}
+                    config: |
+                      {
+                        "awsAuthConfig": {"clusterName": "{{ $name }}"},
+                        "tlsClientConfig": {"insecure": false, "caData": "{{ $ca }}"}
+                      }
+            {{- else if eq $cloud "gcp" }}
+            {{- $defaultInstance := default "e2-medium" $instanceType -}}
+            ---
+            apiVersion: container.gcp.upbound.io/v1beta1
+            kind: Cluster
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: cluster
+            spec:
+              forProvider:
+                location: {{ $region }}
+                minMasterVersion: "{{ $version }}"
+                network: {{ $gcpSpec.network }}
+                subnetwork: {{ $gcpSpec.subnetwork }}
+                removeDefaultNodePool: true
+                initialNodeCount: 1
+              providerConfigRef:
+                name: default
+            ---
+            apiVersion: container.gcp.upbound.io/v1beta1
+            kind: NodePool
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: node-pool
+            spec:
+              forProvider:
+                location: {{ $region }}
+                clusterSelector:
+                  matchControllerRef: true
+                initialNodeCount: {{ $nodeCount }}
+                nodeConfig:
+                  - machineType: {{ $defaultInstance }}
+                    serviceAccount: {{ $gcpSpec.serviceAccount }}
+              providerConfigRef:
+                name: default
+            {{- $endpoint := dig "cluster" "resource" "status" "atProvider" "endpoint" "" $resources -}}
+            {{- $masterAuth := dig "cluster" "resource" "status" "atProvider" "masterAuth" (list) $resources -}}
+            {{- $ca := "" -}}
+            {{- if gt (len $masterAuth) 0 -}}
+              {{- $ca = dig 0 "clusterCaCertificate" "" $masterAuth -}}
+            {{- end -}}
+            ---
+            apiVersion: kubernetes.crossplane.io/v1alpha2
+            kind: Object
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: argocd-cluster-secret
+            spec:
+              providerConfigRef:
+                name: hub
+              forProvider:
+                manifest:
+                  apiVersion: v1
+                  kind: Secret
+                  metadata:
+                    name: cluster-{{ $name }}
+                    namespace: argocd
+                    labels:
+                      argocd.argoproj.io/secret-type: cluster
+                      skylab.io/env: {{ $env }}
+                  type: Opaque
+                  stringData:
+                    name: {{ $name }}
+                    server: https://{{ $endpoint }}
+                    config: |
+                      {
+                        "execProviderConfig": {
+                          "command": "argocd-k8s-auth",
+                          "args": ["gcp"],
+                          "apiVersion": "client.authentication.k8s.io/v1beta1"
+                        },
+                        "tlsClientConfig": {"insecure": false, "caData": "{{ $ca }}"}
+                      }
+            {{- end }}
+    - step: auto-ready
+      functionRef:
+        name: function-auto-ready
