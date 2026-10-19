@@ -4,6 +4,10 @@ set -euo pipefail
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 
+normalize() {
+  sed -E 's/lastTransitionTime: "[^"]*"/lastTransitionTime: "REDACTED"/g'
+}
+
 fail=0
 shopt -s nullglob
 for example in examples/*/*.yaml; do
@@ -24,8 +28,9 @@ for example in examples/*/*.yaml; do
     continue
   fi
 
-  if ! diff -u "$expected" "$actual"; then
-    echo "   drift in ${api}/${cloud}"
+  if ! diff -u <(normalize < "$expected") <(normalize < "$actual"); then
+    echo "   drift in ${api}/${cloud} (actual below)"
+    cat "$actual"
     fail=1
   fi
 done
