@@ -10,7 +10,7 @@ trap 'rm -rf "$tmp"' EXIT
 crossplane xpkg build \
   --package-root=. \
   --examples-root=./examples \
-  --ignore=".github/workflows/*.yaml,tests/functions.yaml,tests/bucket/*.yaml" \
+  --ignore=".github/workflows/*.yaml,tests/functions.yaml,tests/*/*.yaml" \
   --package-file="${tmp}/skylab-platform.xpkg"
 
 echo ">> package built OK"
