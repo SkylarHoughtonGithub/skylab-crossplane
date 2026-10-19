@@ -1,0 +1,36 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: xbuckets.storage.skylab.io
+spec:
+  scope: Namespaced
+  group: storage.skylab.io
+  names:
+    kind: XBucket
+    plural: xbuckets
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [cloud, region]
+              properties:
+                cloud:
+                  type: string
+                  enum: [aws, gcp]
+                region:
+                  type: string
+                versioning:
+                  type: boolean
+                  default: false
+            status:
+              type: object
+              properties:
+                bucketName:
+                  type: string
