@@ -131,6 +131,10 @@ skylab-crossplane/
 - Chainsaw end-to-end tests as a stretch goal.
 - `crossplane xpkg build` and push to GHCR on tagged releases.
 
+### Release strategy
+
+**Live:** release-please + Conventional Commits (`release-type: simple`, single package at repo root — see the Status section above for the live workflow). This repo is one of the first adopters of the fleet-wide convention; the full decision + per-repo `release-type` map is in `skylab-gitops/plan.md`.
+
 ### Done when
 
 - [ ] A Backstage template creates an EKS or GKE cluster that Argo CD adopts with no manual step
