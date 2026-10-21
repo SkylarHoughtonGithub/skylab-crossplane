@@ -1,0 +1,137 @@
+---
+apiVersion: database.skylab.io/v1alpha1
+kind: XPostgres
+metadata:
+  name: example
+  namespace: default
+spec:
+  cloud: gcp
+  crossplane:
+    resourceRefs:
+    - apiVersion: sql.gcp.upbound.io/v1beta1
+      kind: DatabaseInstance
+      name: example-dc2a765da683
+    - apiVersion: sql.gcp.upbound.io/v1beta1
+      kind: Database
+      name: example-16f035095bbd
+    - apiVersion: sql.gcp.upbound.io/v1beta1
+      kind: User
+      name: example-c65bc16c1f96
+  databaseName: app
+  gcp:
+    network: projects/my-project/global/networks/default
+  passwordSecretRef:
+    key: password
+    name: example-pg-password
+    namespace: default
+  region: us-central1
+  storageGB: 20
+  username: app
+  version: '16'
+status:
+  conditions:
+  - lastTransitionTime: REDACTED
+    reason: WatchCircuitClosed
+    status: 'True'
+    type: Responsive
+  - lastTransitionTime: REDACTED
+    reason: ReconcileSuccess
+    status: 'True'
+    type: Synced
+  - lastTransitionTime: REDACTED
+    message: 'Unready resources: database, instance, and user'
+    reason: Creating
+    status: 'False'
+    type: Ready
+---
+apiVersion: sql.gcp.upbound.io/v1beta1
+kind: Database
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: database
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-16f035095bbd
+  namespace: default
+  ownerReferences:
+  - apiVersion: database.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XPostgres
+    name: example
+    uid: e1e3e037-d304-54a2-9f11-553fdaa97b50
+spec:
+  forProvider:
+    instanceSelector:
+      matchControllerRef: true
+    name: app
+  providerConfigRef:
+    name: default
+---
+apiVersion: sql.gcp.upbound.io/v1beta1
+kind: DatabaseInstance
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: instance
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-dc2a765da683
+  namespace: default
+  ownerReferences:
+  - apiVersion: database.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XPostgres
+    name: example
+    uid: e1e3e037-d304-54a2-9f11-553fdaa97b50
+spec:
+  forProvider:
+    databaseVersion: POSTGRES_16
+    deletionProtection: false
+    region: us-central1
+    rootPasswordSecretRef:
+      key: password
+      name: example-pg-password
+      namespace: default
+    settings:
+    - diskSize: 20
+      ipConfiguration:
+      - ipv4Enabled: false
+        privateNetwork: projects/my-project/global/networks/default
+      tier: db-f1-micro
+  providerConfigRef:
+    name: default
+  writeConnectionSecretToRef:
+    name: example-conn
+    namespace: default
+---
+apiVersion: sql.gcp.upbound.io/v1beta1
+kind: User
+metadata:
+  annotations:
+    crossplane.io/composition-resource-name: user
+  generateName: example-
+  labels:
+    crossplane.io/composite: example
+  name: example-c65bc16c1f96
+  namespace: default
+  ownerReferences:
+  - apiVersion: database.skylab.io/v1alpha1
+    blockOwnerDeletion: true
+    controller: true
+    kind: XPostgres
+    name: example
+    uid: e1e3e037-d304-54a2-9f11-553fdaa97b50
+spec:
+  forProvider:
+    instanceSelector:
+      matchControllerRef: true
+    name: app
+    passwordSecretRef:
+      key: password
+      name: example-pg-password
+      namespace: default
+  providerConfigRef:
+    name: default

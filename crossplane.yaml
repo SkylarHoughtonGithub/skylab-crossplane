@@ -14,6 +14,8 @@ spec:
       version: ">=v1.0.0"
     - provider: xpkg.upbound.io/upbound/provider-aws-eks
       version: ">=v1.0.0"
+    - provider: xpkg.upbound.io/upbound/provider-aws-rds
+      version: ">=v1.0.0"
     - provider: xpkg.upbound.io/upbound/provider-family-gcp
       version: ">=v1.0.0"
     - provider: xpkg.upbound.io/upbound/provider-gcp-storage
@@ -21,6 +23,8 @@ spec:
     - provider: xpkg.upbound.io/upbound/provider-gcp-compute
       version: ">=v1.0.0"
     - provider: xpkg.upbound.io/upbound/provider-gcp-container
+      version: ">=v1.0.0"
+    - provider: xpkg.upbound.io/upbound/provider-gcp-sql
       version: ">=v1.0.0"
     - provider: xpkg.upbound.io/crossplane-contrib/provider-kubernetes
       version: ">=v0.17.0"

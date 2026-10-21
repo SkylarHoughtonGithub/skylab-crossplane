@@ -1,0 +1,71 @@
+apiVersion: apiextensions.crossplane.io/v2
+kind: CompositeResourceDefinition
+metadata:
+  name: xpostgreses.database.skylab.io
+spec:
+  scope: Namespaced
+  group: database.skylab.io
+  names:
+    kind: XPostgres
+    plural: xpostgreses
+  versions:
+    - name: v1alpha1
+      served: true
+      referenceable: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          required: [spec]
+          properties:
+            spec:
+              type: object
+              required: [cloud, region, version, passwordSecretRef]
+              properties:
+                cloud:
+                  type: string
+                  enum: [aws, gcp]
+                region:
+                  type: string
+                version:
+                  type: string
+                instanceSize:
+                  type: string
+                storageGB:
+                  type: integer
+                  default: 20
+                databaseName:
+                  type: string
+                  default: app
+                username:
+                  type: string
+                  default: app
+                passwordSecretRef:
+                  type: object
+                  required: [name, key]
+                  properties:
+                    name:
+                      type: string
+                    namespace:
+                      type: string
+                    key:
+                      type: string
+                      default: password
+                aws:
+                  type: object
+                  properties:
+                    dbSubnetGroupName:
+                      type: string
+                    vpcSecurityGroupIds:
+                      type: array
+                      items:
+                        type: string
+                gcp:
+                  type: object
+                  properties:
+                    network:
+                      type: string
+            status:
+              type: object
+              properties:
+                connectionSecretName:
+                  type: string
