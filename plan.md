@@ -43,14 +43,14 @@ Humans and agents only ever write to Git; Argo CD is the single path into the cl
 7. **AI layer**: model gateway, HolmesGPT, tack-ai remediation, kagent.
 8. **Portfolio finish**: profile README, pins, ADRs.
 
-## Status (as of 2026-10-19)
+## Status (as of 2026-10-21)
 
 Progress through the shared build order:
 
 - [x] 1. **skylab-gitops** — bootstrap, skylab-apps renderer, CI pipeline, waves -2 → 6 landed (wave 2 deferred pending this repo's OCI package). 16 Applications healthy in dev; Backstage running in degraded-mode guest sign-in.
 - [x] 2. **skylab-terraform** — substantively complete. Seven stacks and five modules with fmt/validate/tflint/trivy CI. Follow-ups below.
 - [x] 3. **skylab-backstage** — image + chart + plugins shipped; wrapper chart deployed by gitops wave 6.
-- [ ] 4. **skylab-crossplane** — in progress. `crossplane.yaml` Configuration metadata with pinned provider/function dependencies; `v0.1.0` published to `ghcr.io/skylarhoughtongithub/skylab-platform` carrying Bucket (XRD + AWS S3 / GCP Storage compositions); `v0.1.0` pinned in `skylab-gitops` wave 2. CI runs `crossplane xpkg build` + `composition render` with timestamp-normalized diff; release-please watches main and auto-cuts a release PR from Conventional Commit titles, whose merge tags `v*.*.*` and triggers the `release.yaml` workflow that builds + pushes the xpkg. Bucket (v0.1.0) and Network public-VPC (v0.2.0) are published; KubernetesCluster XRD in flight — EKS (Cluster + NodeGroup) and GKE Standard zonal (Cluster + NodePool), both with an Argo CD cluster-Secret written to the hub via provider-kubernetes Object. v1 takes IAM/service-account identifiers + subnet IDs as spec inputs; Terraform owns the IAM. Next: NAT + private subnets for Network, Postgres, and access/RBAC XRDs.
+- [ ] 4. **skylab-crossplane** — in progress. `crossplane.yaml` Configuration metadata with pinned provider/function dependencies; CI runs `crossplane xpkg build` + `composition render` with timestamp-normalized diff; release-please watches main and auto-cuts a release PR from Conventional Commit titles, whose merge tags `v*.*.*` and triggers the `release.yaml` workflow that builds + pushes the xpkg. Published: Bucket (v0.1.0), Network public-VPC (v0.2.0), KubernetesCluster (v0.3.0 — EKS Cluster + NodeGroup, GKE Standard zonal Cluster + NodePool, both with an Argo CD cluster-Secret written to the hub via provider-kubernetes Object; takes IAM/service-account identifiers + subnet IDs as spec inputs since Terraform owns the IAM). **Postgres XRD now landed** — `database.skylab.io/XPostgres` with AWS RDS (`rds.aws.upbound.io/Instance`) and GCP CloudSQL (`sql.gcp.upbound.io/DatabaseInstance` + `Database` + `User`) compositions; both write connection details to `<xr-name>-conn` via `writeConnectionSecretToRef`. Takes `passwordSecretRef` as a user-provided Secret (no in-composition password generation yet). Added `provider-aws-rds` + `provider-gcp-sql` to the Configuration dependencies. Next: NAT + private subnets for Network, access/RBAC XRDs; separately, consider swapping `passwordSecretRef` for in-composition password generation once a `function-generate-password` is pinned.
 - [ ] 5. Archive the old repos
 - [ ] 6. Golden paths
 - [ ] 7. AI layer (includes tack-ai)
@@ -111,7 +111,7 @@ skylab-crossplane/
 | KubernetesCluster | EKS, VPC, access entries | GKE, VPC, Workload Identity |
 | Network | VPC, subnets, NAT gateway | VPC, subnets, Cloud NAT |
 | Bucket | S3 | Cloud Storage |
-| Postgres | RDS | Cloud SQL |
+| Postgres | RDS Instance | Cloud SQL DatabaseInstance + Database + User |
 
 - A single `cloud` parameter selects the composition; no provider-specific fields reach the developer.
 - Install the Upbound AWS and GCP provider families with only the sub-providers needed, to keep CRD count and memory down.

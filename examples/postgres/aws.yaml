@@ -1,0 +1,20 @@
+apiVersion: database.skylab.io/v1alpha1
+kind: XPostgres
+metadata:
+  name: example
+  namespace: default
+spec:
+  cloud: aws
+  region: us-east-1
+  version: "16"
+  storageGB: 20
+  databaseName: app
+  username: app
+  passwordSecretRef:
+    name: example-pg-password
+    namespace: default
+    key: password
+  aws:
+    dbSubnetGroupName: example-db-subnets
+    vpcSecurityGroupIds:
+      - sg-aaaaaaaa

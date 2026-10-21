@@ -1,0 +1,132 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: xpostgreses.database.skylab.io
+spec:
+  compositeTypeRef:
+    apiVersion: database.skylab.io/v1alpha1
+    kind: XPostgres
+  mode: Pipeline
+  pipeline:
+    - step: render-cloud-resources
+      functionRef:
+        name: function-go-templating
+      input:
+        apiVersion: gotemplating.fn.crossplane.io/v1beta1
+        kind: GoTemplate
+        source: Inline
+        inline:
+          template: |
+            {{- $xr := .observed.composite.resource -}}
+            {{- $name := $xr.metadata.name -}}
+            {{- $namespace := default "default" $xr.metadata.namespace -}}
+            {{- $cloud := $xr.spec.cloud -}}
+            {{- $region := $xr.spec.region -}}
+            {{- $version := $xr.spec.version -}}
+            {{- $storage := default 20 $xr.spec.storageGB -}}
+            {{- $db := default "app" $xr.spec.databaseName -}}
+            {{- $user := default "app" $xr.spec.username -}}
+            {{- $instanceSize := $xr.spec.instanceSize -}}
+            {{- $pwRef := $xr.spec.passwordSecretRef -}}
+            {{- $pwNamespace := default $namespace $pwRef.namespace -}}
+            {{- $pwKey := default "password" $pwRef.key -}}
+            {{- $connName := printf "%s-conn" $name -}}
+            {{- $awsSpec := default dict $xr.spec.aws -}}
+            {{- $gcpSpec := default dict $xr.spec.gcp -}}
+            {{- if eq $cloud "aws" }}
+            {{- $defaultInstance := default "db.t3.micro" $instanceSize -}}
+            ---
+            apiVersion: rds.aws.upbound.io/v1beta1
+            kind: Instance
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: instance
+            spec:
+              forProvider:
+                region: {{ $region }}
+                engine: postgres
+                engineVersion: "{{ $version }}"
+                instanceClass: {{ $defaultInstance }}
+                allocatedStorage: {{ $storage }}
+                dbName: {{ $db }}
+                username: {{ $user }}
+                passwordSecretRef:
+                  name: {{ $pwRef.name }}
+                  namespace: {{ $pwNamespace }}
+                  key: {{ $pwKey }}
+                dbSubnetGroupName: {{ $awsSpec.dbSubnetGroupName }}
+                vpcSecurityGroupIds:
+                  {{- range $awsSpec.vpcSecurityGroupIds }}
+                  - {{ . }}
+                  {{- end }}
+                publiclyAccessible: false
+                skipFinalSnapshot: true
+                storageEncrypted: true
+              writeConnectionSecretToRef:
+                name: {{ $connName }}
+                namespace: {{ $namespace }}
+              providerConfigRef:
+                name: default
+            {{- else if eq $cloud "gcp" }}
+            {{- $defaultInstance := default "db-f1-micro" $instanceSize -}}
+            {{- $gcpVersion := printf "POSTGRES_%s" $version -}}
+            ---
+            apiVersion: sql.gcp.upbound.io/v1beta1
+            kind: DatabaseInstance
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: instance
+            spec:
+              forProvider:
+                region: {{ $region }}
+                databaseVersion: {{ $gcpVersion }}
+                deletionProtection: false
+                settings:
+                  - tier: {{ $defaultInstance }}
+                    diskSize: {{ $storage }}
+                    ipConfiguration:
+                      - ipv4Enabled: false
+                        privateNetwork: {{ $gcpSpec.network }}
+                rootPasswordSecretRef:
+                  name: {{ $pwRef.name }}
+                  namespace: {{ $pwNamespace }}
+                  key: {{ $pwKey }}
+              writeConnectionSecretToRef:
+                name: {{ $connName }}
+                namespace: {{ $namespace }}
+              providerConfigRef:
+                name: default
+            ---
+            apiVersion: sql.gcp.upbound.io/v1beta1
+            kind: Database
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: database
+            spec:
+              forProvider:
+                name: {{ $db }}
+                instanceSelector:
+                  matchControllerRef: true
+              providerConfigRef:
+                name: default
+            ---
+            apiVersion: sql.gcp.upbound.io/v1beta1
+            kind: User
+            metadata:
+              annotations:
+                gotemplating.fn.crossplane.io/composition-resource-name: user
+            spec:
+              forProvider:
+                name: {{ $user }}
+                instanceSelector:
+                  matchControllerRef: true
+                passwordSecretRef:
+                  name: {{ $pwRef.name }}
+                  namespace: {{ $pwNamespace }}
+                  key: {{ $pwKey }}
+              providerConfigRef:
+                name: default
+            {{- end }}
+    - step: auto-ready
+      functionRef:
+        name: function-auto-ready
