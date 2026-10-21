@@ -4,11 +4,6 @@ on:
   push:
     tags:
       - 'v*.*.*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Existing tag to re-publish (e.g. v0.4.0)'
-        required: true
 
 permissions:
   contents: read
@@ -19,8 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ inputs.tag || github.ref }}
 
       - name: Install crossplane CLI
         env:
@@ -49,9 +42,8 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Push package to GHCR
-        env:
-          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
+          TAG="${GITHUB_REF#refs/tags/}"
           REPO_LC="${GITHUB_REPOSITORY_OWNER,,}"
           crossplane xpkg push \
             --package-files=skylab-platform.xpkg \
@@ -60,8 +52,8 @@ jobs:
       - name: Notify skylab-gitops to run Renovate
         env:
           GH_TOKEN: ${{ secrets.GITOPS_DISPATCH_PAT }}
-          TAG: ${{ inputs.tag || github.ref_name }}
         run: |
+          TAG="${GITHUB_REF#refs/tags/}"
           REPO_LC="${GITHUB_REPOSITORY_OWNER,,}"
           curl --fail --silent --show-error \
             -X POST \
